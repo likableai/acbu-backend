@@ -23,14 +23,14 @@ app.use(express.urlencoded({ extended: true }));
 // Webhooks need raw body for signature verification; mount before json()
 app.use(
   `/${config.apiVersion}/webhooks`,
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: "application/json" }),
   (req: express.Request, res: express.Response, next) => {
     const raw = req.body as Buffer;
     (req as unknown as { rawBody: Buffer }).rawBody = raw;
     try {
       (req as unknown as { body: unknown }).body = JSON.parse(raw.toString());
     } catch {
-      res.status(400).json({ error: 'Invalid JSON payload' });
+      res.status(400).json({ error: "Invalid JSON payload" });
       return;
     }
     next();

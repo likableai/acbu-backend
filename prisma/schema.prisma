@@ -287,6 +287,7 @@ model OnRampSwap {
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status], name: "idx_on_ramp_swap_status")
+  @@index([status, createdAt], name: "idx_on_ramp_swap_status_created_at")
   @@index([source], name: "idx_on_ramp_swap_source")
   @@index([userId], name: "idx_on_ramp_swap_user_id")
   @@index([createdAt], name: "idx_on_ramp_swap_created_at")
