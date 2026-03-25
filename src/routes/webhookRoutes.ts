@@ -13,10 +13,6 @@ router.post(
   verifyFlutterwaveSignature,
   handleFlutterwaveWebhook,
 );
-router.post(
-  "/paystack",
-  verifyPaystackSignature,
-  handlePaystackWebhook,
-);
+router.post("/paystack", verifyPaystackSignature, handlePaystackWebhook);
 
 export default router;

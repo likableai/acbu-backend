@@ -130,7 +130,9 @@ async function extractWithOpenAI(
     const content = response.choices[0]?.message?.content?.trim() ?? "";
 
     // Parse the JSON response, stripping markdown code fences if present
-    const jsonStr = content.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");
+    const jsonStr = content
+      .replace(/^```json?\s*/i, "")
+      .replace(/\s*```$/i, "");
     const parsed = JSON.parse(jsonStr);
 
     extracted = {
@@ -162,7 +164,9 @@ async function extractWithOpenAI(
     extracted.nationality,
   ].filter(Boolean).length;
 
-  const hasIdDoc = documents.some((d) => d.kind === "id_front" || d.kind === "id_back");
+  const hasIdDoc = documents.some(
+    (d) => d.kind === "id_front" || d.kind === "id_back",
+  );
   const hasSelfie = documents.some((d) => d.kind === "selfie");
   const docBonus = hasIdDoc && hasSelfie ? 0.05 : 0;
 
