@@ -1,4 +1,3 @@
-import { Asset } from "stellar-sdk";
 import { prisma } from "../../config/database";
 import { config } from "../../config/env";
 import { getContractAddresses } from "../../config/contracts";
@@ -282,7 +281,7 @@ export class ReserveTracker {
   }
 
   /**
-   * Get total ACBU supply from blockchain. 
+   * Get total ACBU supply from blockchain.
    * Queries Horizon to get the actual amount in circulation, preventing divergence from internal tracking.
    */
   private async getTotalAcbuSupply(): Promise<number> {
@@ -320,10 +319,13 @@ export class ReserveTracker {
         .call();
 
       if (assets.records.length === 0) {
-        logger.warn("ACBU asset not found on Stellar; supply is effectively zero.", {
-          assetCode,
-          issuer,
-        });
+        logger.warn(
+          "ACBU asset not found on Stellar; supply is effectively zero.",
+          {
+            assetCode,
+            issuer,
+          },
+        );
         return 0;
       }
 
@@ -331,7 +333,9 @@ export class ReserveTracker {
       const totalSupply = parseFloat(assets.records[0].amount);
       return totalSupply;
     } catch (e) {
-      logger.error("Failed to query Stellar for ACBU total supply", { error: e });
+      logger.error("Failed to query Stellar for ACBU total supply", {
+        error: e,
+      });
       // We throw here because returning a stale or zero value would incorrectly trigger health alerts
       throw new Error(`Stellar Horizon query failed for ACBU supply: ${e}`);
     }
