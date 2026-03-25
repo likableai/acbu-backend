@@ -63,7 +63,9 @@ export async function createTransfer(
   const amount = params.amountAcbu.trim();
   // Reject scientific notation and enforce up to 7 decimal places (Stellar max precision)
   if (!amount || !/^\d+(\.\d{1,7})?$/.test(amount) || Number(amount) <= 0) {
-    throw new Error("amount_acbu must be a positive number with up to 7 decimal places");
+    throw new Error(
+      "amount_acbu must be a positive number with up to 7 decimal places",
+    );
   }
 
   const sender = await prisma.user.findUnique({
