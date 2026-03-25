@@ -38,14 +38,10 @@ export async function startWebhookConsumer(): Promise<void> {
 
       const headers = msg.properties.headers ?? {};
       const retries =
-        typeof headers["x-retries"] === "number"
-          ? headers["x-retries"]
-          : 0;
+        typeof headers["x-retries"] === "number" ? headers["x-retries"] : 0;
 
       try {
-        const body = JSON.parse(
-          msg.content.toString()
-        ) as WebhookJobPayload;
+        const body = JSON.parse(msg.content.toString()) as WebhookJobPayload;
 
         const { webhookId } = body;
 
@@ -104,7 +100,7 @@ export async function startWebhookConsumer(): Promise<void> {
         ch.ack(msg);
       }
     },
-    { noAck: false }
+    { noAck: false },
   );
 
   logger.info("Webhook consumer started", {
