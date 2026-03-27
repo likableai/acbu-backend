@@ -37,6 +37,26 @@ const usdcBodySchema = z.object({
   currency_preference: z.enum(["auto"]).optional(),
 });
 
+async function assertUserWalletAddress(
+  userId: string,
+  providedAddress: string,
+): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stellarAddress: true },
+  });
+
+  if (!user?.stellarAddress) {
+    throw new AppError("User wallet address not set", 400);
+  }
+
+  if (user.stellarAddress !== providedAddress) {
+    throw new AppError("Wallet address does not match user", 403);
+  }
+
+  return user.stellarAddress;
+}
+
 /**
  * POST /v1/mint/usdc - Accept USDC deposit. We convert USDC→XLM in backend (pools/swaps independent); once conversion succeeds, mint is approved. User does not wait for LPs.
  */
@@ -58,6 +78,10 @@ export async function mintFromUsdc(
       return;
     }
     const { usdc_amount, wallet_address } = parsed.data;
+    const userWalletAddress = await assertUserWalletAddress(
+      userId,
+      wallet_address,
+    );
     const usdcNum = Number(usdc_amount);
     // SECURITY: Always enforce circuit breaker and deposit limits
     // Previously these checks were skipped when req.audience was undefined,
@@ -85,7 +109,7 @@ export async function mintFromUsdc(
     const swap = await prisma.onRampSwap.create({
       data: {
         userId,
-        stellarAddress: wallet_address,
+        stellarAddress: userWalletAddress,
         source: "usdc_deposit",
         usdcAmount: new Decimal(usdcNum),
         xlmAmount: null,
@@ -196,6 +220,9 @@ export async function depositFromBasketCurrency(
       return;
     }
     const amountNum = Number(amount);
+    if (req.apiKey?.userId) {
+      await assertUserWalletAddress(req.apiKey.userId, wallet_address);
+    }
     // SECURITY: Always enforce circuit breaker and deposit limits
     // Previously these checks were skipped when req.audience was undefined,
     // allowing bypass of critical financial controls via direct /mint/deposit route

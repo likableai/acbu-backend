@@ -140,6 +140,10 @@ export const validateApiKey = async (
       rateLimit: apiKeyRecord.rateLimit,
     };
 
+    if (apiKeyRecord.user?.tier) {
+      req.userTier = apiKeyRecord.user.tier as UserTier;
+    }
+
     next();
   } catch (error) {
     next(error);

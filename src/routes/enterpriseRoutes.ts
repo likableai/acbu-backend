@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { validateApiKey } from "../middleware/auth";
-import { requireSegmentScope } from "../middleware/segmentGuard";
+import { requireMinTier, requireSegmentScope } from "../middleware/segmentGuard";
 import { apiKeyRateLimiter } from "../middleware/rateLimiter";
 import {
   postBulkTransfer,
@@ -10,6 +10,7 @@ import {
 const router: IRouter = Router();
 
 router.use(validateApiKey);
+router.use(requireMinTier("enterprise"));
 router.use(requireSegmentScope("enterprise:read", "enterprise:write"));
 router.use(apiKeyRateLimiter);
 
