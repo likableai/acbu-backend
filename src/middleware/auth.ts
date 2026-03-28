@@ -6,6 +6,19 @@ import { logger } from "../config/logger";
 
 export type Audience = "retail" | "business" | "government";
 export type UserTier = "free" | "verified" | "sme" | "enterprise";
+export type PermissionScope =
+  | "p2p:read"
+  | "p2p:write"
+  | "p2p:admin"
+  | "sme:read"
+  | "sme:write"
+  | "sme:admin"
+  | "gateway:read"
+  | "gateway:write"
+  | "gateway:admin"
+  | "enterprise:read"
+  | "enterprise:write"
+  | "enterprise:admin";
 const API_KEY_PREFIX = "acbu";
 const API_KEY_LOOKUP_LENGTH = 12;
 const API_KEY_SECRET_LENGTH = 64;
@@ -26,6 +39,25 @@ export interface AuthRequest extends Request {
   audience?: Audience;
   /** Optional user tier populated by upstream middleware/services for authorization checks. */
   userTier?: UserTier;
+}
+
+/**
+ * Validate and parse permissions from Prisma JSON field
+ * @param permissions - Raw permissions from database (Json type)
+ * @returns Array of validated permission strings, or empty array if invalid
+ */
+function validatePermissions(permissions: unknown): string[] {
+  if (!permissions) {
+    return [];
+  }
+
+  if (Array.isArray(permissions)) {
+    return permissions.every((p) => typeof p === "string")
+      ? (permissions as string[])
+      : [];
+  }
+
+  return [];
 }
 
 function parseApiKey(
@@ -104,9 +136,13 @@ export const validateApiKey = async (
       id: apiKeyRecord.id,
       userId: apiKeyRecord.userId ?? null,
       organizationId: apiKeyRecord.organizationId ?? null,
-      permissions: (apiKeyRecord.permissions as string[]) || [],
+      permissions: validatePermissions(apiKeyRecord.permissions),
       rateLimit: apiKeyRecord.rateLimit,
     };
+
+    if (apiKeyRecord.user?.tier) {
+      req.userTier = apiKeyRecord.user.tier as UserTier;
+    }
 
     next();
   } catch (error) {
@@ -139,7 +175,7 @@ export async function generateApiKey(
       userId: userId ?? null,
       lookupKey,
       keyHash,
-      permissions: permissions as any,
+      permissions,
     },
   });
 

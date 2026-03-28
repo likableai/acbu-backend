@@ -10,12 +10,16 @@ import {
 } from "../controllers/mintController";
 import { burnAcbu } from "../controllers/burnController";
 import { validateApiKey } from "../middleware/auth";
-import { requireSegmentScope } from "../middleware/segmentGuard";
+import {
+  requireMinTier,
+  requireSegmentScope,
+} from "../middleware/segmentGuard";
 import { apiKeyRateLimiter } from "../middleware/rateLimiter";
 
 const router: IRouter = Router();
 
 router.use(validateApiKey);
+router.use(requireMinTier("sme"));
 router.use(requireSegmentScope("sme:write", "enterprise:write"));
 router.use((req, _res, next) => {
   (req as import("../middleware/auth").AuthRequest).audience = "business";

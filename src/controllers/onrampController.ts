@@ -9,9 +9,37 @@ import { AuthRequest } from "../middleware/auth";
 import { Decimal } from "@prisma/client/runtime/library";
 import { enqueueXlmToAcbu } from "../jobs/xlmToAcbuJob";
 import { AppError } from "../middleware/errorHandler";
+import { isValidStellarAddress } from "../utils/stellar";
+
+async function assertUserWalletAddress(
+  userId: string,
+  providedAddress: string,
+): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stellarAddress: true },
+  });
+
+  if (!user?.stellarAddress) {
+    throw new AppError("User wallet address not set", 400);
+  }
+
+  if (user.stellarAddress !== providedAddress) {
+    throw new AppError("Wallet address does not match user", 403);
+  }
+
+  return user.stellarAddress;
+}
 
 const bodySchema = z.object({
-  stellar_address: z.string().length(56).regex(/^G/),
+  stellar_address: z
+    .string()
+    .length(56)
+    .regex(/^G/)
+    .refine(
+      (s) => isValidStellarAddress(s),
+      "Invalid Stellar address (bad checksum)",
+    ),
   xlm_amount: z
     .string()
     .min(1)
@@ -50,11 +78,15 @@ export async function registerOnRampSwap(
       return;
     }
     const { stellar_address, xlm_amount, usdc_amount } = parsed.data;
+    const userWalletAddress = await assertUserWalletAddress(
+      userId,
+      stellar_address,
+    );
     const xlmNum = Number(xlm_amount);
     const swap = await prisma.onRampSwap.create({
       data: {
         userId,
-        stellarAddress: stellar_address,
+        stellarAddress: userWalletAddress,
         source: "xlm_deposit",
         xlmAmount: new Decimal(xlmNum),
         usdcAmount:
@@ -65,7 +97,7 @@ export async function registerOnRampSwap(
     await enqueueXlmToAcbu({
       onRampSwapId: swap.id,
       userId,
-      stellarAddress: stellar_address,
+      stellarAddress: userWalletAddress,
       xlmAmount: xlm_amount,
       usdcEquivalent: usdc_amount,
     });
