@@ -45,7 +45,6 @@ model User {
   createdAt                DateTime                   @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt                DateTime                   @updatedAt @map("updated_at") @db.Timestamp(6)
   apiKeys                  ApiKey[]
-  bank_account_simulations bank_account_simulations[]
   wardGuardians            Guardian[]                 @relation("GuardianWard")
   guardians                Guardian[]                 @relation("UserGuardians")
   kycApplications          KycApplication[]
@@ -86,7 +85,6 @@ model Transaction {
   createdAt             DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
   completedAt           DateTime?               @map("completed_at") @db.Timestamp(6)
   reserveHistory        ReserveHistory[]
-  simulated_fiat_ledger simulated_fiat_ledger[]
   user                  User?                   @relation(fields: [userId], references: [id])
   webhooks              Webhook[]
 
@@ -135,20 +133,6 @@ model ReserveHistory {
 }
 
 model OracleRate {
-<<<<<<< HEAD
-  id                  String    @id @default(uuid()) @db.Uuid
-  currency            String    @db.VarChar(3)
-  rateUsd            Decimal   @map("rate_usd") @db.Decimal(20, 8)
-
-  centralBankRate     Decimal?  @map("central_bank_rate") @db.Decimal(20, 8)
-  fintechRate         Decimal?  @map("fintech_rate") @db.Decimal(20, 8)
-  forexRate           Decimal?  @map("forex_rate") @db.Decimal(20, 8)
-  medianRate          Decimal   @map("median_rate") @db.Decimal(20, 8)
-  twap24h             Decimal?  @map("twap_24h") @db.Decimal(20, 8)
-  validatorSignatures Json?     @map("validator_signatures")
-  rawValues           Json?     @map("raw_values") @db.JsonB
-  timestamp           DateTime  @default(now()) @db.Timestamp
-=======
   id                  String   @id @default(uuid()) @db.Uuid
   currency            String   @db.VarChar(3)
   rateUsd             Decimal  @map("rate_usd") @db.Decimal(20, 8)
@@ -158,9 +142,8 @@ model OracleRate {
   medianRate          Decimal  @map("median_rate") @db.Decimal(20, 8)
   twap24h             Decimal? @map("twap_24h") @db.Decimal(20, 8)
   validatorSignatures Json?    @map("validator_signatures")
+  rawValues           Json?    @map("raw_values")
   timestamp           DateTime @default(now()) @db.Timestamp(6)
-  raw_values          Json?
->>>>>>> ec2f6afe7f5b087647fffb53e78809ac9ae645b3
 
   @@unique([currency, timestamp])
   @@index([currency], map: "idx_oracle_rates_currency")
@@ -495,38 +478,3 @@ model KycValidatorReward {
   @@map("kyc_validator_rewards")
 }
 
-<<<<<<< HEAD
-=======
-model bank_account_simulations {
-  id                    String                  @id @db.Uuid
-  user_id               String                  @db.Uuid
-  bank_name             String                  @db.VarChar(100)
-  account_number        String                  @db.VarChar(50)
-  currency              String                  @db.VarChar(3)
-  balance               Decimal                 @default(0) @db.Decimal(20, 2)
-  created_at            DateTime                @default(now()) @db.Timestamp(6)
-  updated_at            DateTime                @db.Timestamp(6)
-  users                 User                    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  simulated_fiat_ledger simulated_fiat_ledger[]
-
-  @@unique([user_id, currency])
-  @@index([account_number], map: "idx_bank_account_sim_account_number")
-  @@index([user_id], map: "idx_bank_account_sim_user_id")
-}
-
-model simulated_fiat_ledger {
-  id                       String                   @id @db.Uuid
-  bank_account_id          String                   @db.Uuid
-  type                     String                   @db.VarChar(20)
-  amount                   Decimal                  @db.Decimal(20, 2)
-  currency                 String                   @db.VarChar(3)
-  status                   String                   @default("completed") @db.VarChar(20)
-  transaction_id           String?                  @db.Uuid
-  created_at               DateTime                 @default(now()) @db.Timestamp(6)
-  bank_account_simulations bank_account_simulations @relation(fields: [bank_account_id], references: [id], onDelete: Cascade)
-  transactions             Transaction?             @relation(fields: [transaction_id], references: [id])
-
-  @@index([bank_account_id], map: "idx_sim_fiat_ledger_account_id")
-  @@index([type], map: "idx_sim_fiat_ledger_type")
-}
->>>>>>> ec2f6afe7f5b087647fffb53e78809ac9ae645b3
